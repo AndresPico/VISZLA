@@ -1,6 +1,5 @@
 // src/modules/users/models/user.model.js
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
 
 const UserSchema = new mongoose.Schema({
   nombres: { type: String, required: true, trim: true },
