@@ -5,7 +5,7 @@ const UserSchema = new mongoose.Schema({
   nombres: { type: String, required: true, trim: true },
   apellidos: { type: String, trim: true },
   apodo: { type: String, trim: true, unique: true},
-  avatar: { type: String },
+  avatar: { type: String }, //asumiendo que es una foto de perfil 
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   password: { type: String, required: true },
   rol: { type: String, enum: ["jugador", "admin"], default: "jugador" },
