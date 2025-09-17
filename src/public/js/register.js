@@ -24,6 +24,13 @@ const requirements = {
   special: document.getElementById('req-special')
 };
 
+// Evento para abrir el PDF de tratamiento de datos
+  termsLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    // Abrir el PDF en una nueva pestaña
+    window.open('../assets/documents/tratamiento-datos.pdf', '_blank');
+  });
+
 // Funciones de utilidad
 function showAlert(message, type = 'danger', errors = []) {
   let alertHTML = `
@@ -48,7 +55,7 @@ function showAlert(message, type = 'danger', errors = []) {
 }
 
 function clearFieldErrors() {
-  const fields = ['nombres', 'apellidos', 'apodo', 'email', 'password', 'confirmPassword'];
+  const fields = ['nombres', 'apellidos', 'apodo', 'email', 'password', 'confirmPassword','acceptTerms'];
   fields.forEach(field => {
     const input = document.getElementById(field);
     input.classList.remove('is-invalid');

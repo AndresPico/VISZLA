@@ -13,7 +13,12 @@ const UserSchema = new mongoose.Schema({
   fechaCreacion: { type: Date, default: Date.now },
   confirmacionToken: { type: String },
   confirmacionExpira: { type: Date },
-  confirmado: { type: Boolean, default: false }
+  confirmado: { type: Boolean, default: false },
+
+  // Nuevos campos para términos y condiciones
+  terminosAceptados: { type: Boolean, required: true, default: false },
+  fechaAceptacionTerminos: { type: Date },
+  versionTerminos: { type: String, default: "1.0" } // Para control de versiones
 });
 
 module.exports = mongoose.model("Usuarios", UserSchema);

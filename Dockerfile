@@ -13,8 +13,5 @@ RUN npm install --omit=dev
 # Copiar el resto del código
 COPY . .
 
-# Exponer el puerto en el que corre tu app
-EXPOSE 3000
-
 # Comando para correr la app
 CMD ["node", "src/server.js"]
