@@ -4,7 +4,105 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Perfil del Jugador</title>
-  <link rel="stylesheet" href="../disegn/example.css">
+  <style>
+    .password-strength {
+      height: 6px;
+      border-radius: 3px;
+      transition: all 0.3s ease;
+    }
+    .strength-weak { background-color: #dc3545; }
+    .strength-medium { background-color: #ffc107; }
+    .strength-strong { background-color: #28a745; }
+    .form-floating .form-control:focus ~ label,
+    .form-floating .form-control:not(:placeholder-shown) ~ label {
+      opacity: .65;
+      transform: scale(.85) translateY(-0.5rem) translateX(0.15rem);
+    }
+    .requirement {
+      font-size: 0.875rem;
+      transition: color 0.3s ease;
+    }
+    .requirement.met {
+      color: #28a745;
+    }
+    .requirement.not-met {
+      color: #dc3545;
+    }
+    .terms-link {
+      color: #0d6efd;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+    .terms-link:hover {
+      color: #0b5ed7;
+    }
+    .terms-checkbox {
+      margin-right: 8px;
+    }
+    .terms-text {
+      font-size: 0.875rem;
+      line-height: 1.4;
+    }
+    .delete-section {
+      margin-top: 40px;
+      padding: 25px;
+      border: 2px solid #dc3545;
+      border-radius: 10px;
+      background: rgba(220, 53, 69, 0.1);
+    }
+    .delete-warning {
+      color: #dc3545;
+      font-weight: bold;
+      font-size: 0.9rem;
+      margin-bottom: 15px;
+    }
+    .btn-danger-custom {
+      background: linear-gradient(90deg, #dc3545, #a71e28);
+      border: none;
+      color: white;
+      font-weight: bold;
+      padding: 10px 20px;
+      border-radius: 6px;
+      box-shadow: 0px 0px 8px rgba(220, 53, 69, 0.5);
+      transition: all 0.3s ease;
+    }
+    .btn-danger-custom:hover {
+      transform: scale(1.05);
+      box-shadow: 0px 0px 15px rgba(220, 53, 69, 0.8);
+    }
+    .mensaje {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 6px;
+      font-weight: bold;
+    }
+    .mensaje.exito {
+      background-color: rgba(40, 167, 69, 0.2);
+      color: #28a745;
+      border: 2px solid #28a745;
+    }
+    .mensaje.error {
+      background-color: rgba(220, 53, 69, 0.2);
+      color: #dc3545;
+      border: 2px solid #dc3545;
+    }
+    .logout-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: linear-gradient(90deg, #6c757d, #495057);
+      border: none;
+      color: white;
+      padding: 8px 15px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+    }
+    .perfil-container {
+      position: relative;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+  </style>
 </head>
 <body>
   <div class="perfil-container">
@@ -49,18 +147,89 @@
       <button type="submit">Guardar cambios</button>
     </form>
 
+    <!-- Sección de eliminación de cuenta -->
+    <div class="delete-section">
+      <h3 style="color: #dc3545;">
+        <i class="bi bi-exclamation-triangle"></i> Zona Peligrosa
+      </h3>
+      <div class="delete-warning">
+        <i class="bi bi-info-circle"></i> 
+        ¡ATENCIÓN! Esta acción eliminará permanentemente tu cuenta y todos tus datos. 
+        Esta acción no se puede deshacer.
+      </div>
+      <p style="color: #666; font-size: 0.9rem;">
+        Al eliminar tu cuenta, perderás:
+      </p>
+      <ul style="color: #666; font-size: 0.85rem; margin-left: 20px;">
+        <li>Tu perfil de usuario</li>
+        <li>Todo tu historial de juegos</li>
+        <li>Tus estadísticas y logros</li>
+        <li>Cualquier contenido asociado a tu cuenta</li>
+      </ul>
+      <button type="button" class="btn-danger-custom" id="deleteAccountBtn">
+        <i class="bi bi-trash3"></i> Eliminar mi cuenta permanentemente
+      </button>
+    </div>
+
+    <!-- Mensajes de éxito o error -->
+    <div id="mensaje" class="mensaje" style="display: none;"></div>
+  </div>
+
+  <!-- Modal de confirmación para eliminar cuenta -->
+  <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title">
+            <i class="bi bi-exclamation-triangle"></i> Confirmar eliminación de cuenta
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p><strong>¿Estás absolutamente seguro?</strong></p>
+          <p>Esta acción eliminará permanentemente tu cuenta "<span id="confirmApodo"></span>" y todos los datos asociados.</p>
+          <p class="text-danger"><strong>Esta acción no se puede deshacer.</strong></p>
+          <div class="mt-3">
+            <label for="confirmPassword" class="form-label">Para continuar, ingresa tu contraseña actual:</label>
+            <input type="password" class="form-control" id="confirmPassword" placeholder="Tu contraseña actual">
+            <div class="invalid-feedback" id="passwordError"></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-danger" id="confirmDeleteBtn" disabled>
+            <i class="bi bi-trash3"></i> Sí, eliminar mi cuenta
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
     <!-- Mensajes de éxito o error -->
     <div id="mensaje" class="mensaje"></div>
   </div>
 
+   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    const token = localStorage.getItem("token");
+    const userData = JSON.parse(sessionStorage.getItem("usuario") || "{}");
+    const token = userData?.token || localStorage.getItem("token");
     const mensajeDiv = document.getElementById("mensaje");
+
+    // Función para mostrar mensajes
+    function mostrarMensaje(texto, tipo) {
+      mensajeDiv.textContent = texto;
+      mensajeDiv.className = `mensaje ${tipo}`;
+      mensajeDiv.style.display = "block";
+      
+      setTimeout(() => {
+        mensajeDiv.style.display = "none";
+      }, 5000);
+    }
 
     // Cargar datos del usuario
     async function cargarUsuario() {
       try {
-        const res = await fetch("http://localhost:3000/api/usuarios/profile", {
+        const res = await fetch("/api/usuarios/profile", {
           headers: { "Authorization": `Bearer ${token}` }
         });
 
@@ -73,8 +242,10 @@
         document.getElementById("apellidos").value = data.apellidos || "";
         document.getElementById("apodo").value = data.apodo || "";
         document.getElementById("email").value = data.email || "";
+        document.getElementById("confirmApodo").textContent = data.apodo || "";
       } catch (error) {
         console.error(error.message);
+        mostrarMensaje("Error al cargar los datos del usuario", "error");
       }
     }
 
@@ -92,7 +263,7 @@
       };
 
       try {
-        const res = await fetch("http://localhost:3000/api/usuarios/perfil", {
+        const res = await fetch("/api/usuarios/perfil", {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -102,19 +273,106 @@
         });
 
         const data = await res.json();
-        if (!res.ok) throw new Error(data.message || "Error al actualizar perfil");
+        if (!res.ok) throw new Error(data.mensaje || "Error al actualizar perfil");
 
-        mensajeDiv.textContent = "Perfil actualizado con éxito ✅";
-        mensajeDiv.style.color = "green";
+        mostrarMensaje("Perfil actualizado con éxito ✅", "exito");
+
+        // Limpiar campos de contraseña
+        document.getElementById("passwordActual").value = "";
+        document.getElementById("nuevaPassword").value = "";
+        document.getElementById("confirmarPassword").value = "";
 
         // Actualizar vista con los datos nuevos
         cargarUsuario();
       } catch (error) {
-        mensajeDiv.textContent = error.message;
-        mensajeDiv.style.color = "red";
+        mostrarMensaje(error.message, "error");
       }
     });
 
+    // Manejar botón de eliminar cuenta
+    document.getElementById("deleteAccountBtn").addEventListener("click", () => {
+      const deleteModal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+      deleteModal.show();
+    });
+
+    // Habilitar/deshabilitar botón de confirmación según la contraseña
+    document.getElementById("confirmPassword").addEventListener("input", (e) => {
+      const confirmBtn = document.getElementById("confirmDeleteBtn");
+      const passwordError = document.getElementById("passwordError");
+      const passwordInput = document.getElementById("confirmPassword");
+      
+      if (e.target.value.trim().length > 0) {
+        confirmBtn.disabled = false;
+        passwordInput.classList.remove("is-invalid");
+        passwordError.textContent = "";
+      } else {
+        confirmBtn.disabled = true;
+      }
+    });
+
+    // Confirmar eliminación de cuenta
+    document.getElementById("confirmDeleteBtn").addEventListener("click", async () => {
+      const password = document.getElementById("confirmPassword").value;
+      const passwordInput = document.getElementById("confirmPassword");
+      const passwordError = document.getElementById("passwordError");
+      const confirmBtn = document.getElementById("confirmDeleteBtn");
+
+      try {
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Eliminando...';
+
+        const res = await fetch("/api/usuarios/eliminar-cuenta", {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({ password })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          if (res.status === 401) {
+            passwordInput.classList.add("is-invalid");
+            passwordError.textContent = "Contraseña incorrecta";
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = '<i class="bi bi-trash3"></i> Sí, eliminar mi cuenta';
+            return;
+          }
+          throw new Error(data.mensaje || "Error al eliminar cuenta");
+        }
+
+        // Cuenta eliminada exitosamente
+        alert("Tu cuenta ha sido eliminada exitosamente. Serás redirigido a la página de inicio.");
+        
+        // Limpiar almacenamiento y redirigir
+        sessionStorage.removeItem("usuario");
+        localStorage.removeItem("token");
+        window.location.href = "/pages/register.html";
+
+      } catch (error) {
+        console.error("Error al eliminar cuenta:", error);
+        mostrarMensaje(error.message, "error");
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = '<i class="bi bi-trash3"></i> Sí, eliminar mi cuenta';
+        
+        // Cerrar modal en caso de error general
+        const deleteModal = bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal'));
+        deleteModal.hide();
+      }
+    });
+
+    // Botón de cerrar sesión
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      if (confirm("¿Estás seguro de que quieres cerrar sesión?")) {
+        sessionStorage.removeItem("usuario");
+        localStorage.removeItem("token");
+        window.location.href = "/pages/login.html";
+      }
+    });
+
+    // Cargar usuario al iniciar
     cargarUsuario();
   </script>
 </body>
