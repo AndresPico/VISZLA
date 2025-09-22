@@ -42,7 +42,6 @@ async function registerUser({ nombres, apellidos, apodo, avatar, email, password
 }
 
 async function verifyUser(token) {
-  // Buscar usuario por token y que no haya expirado
   const user = await Usuario.findOne({
     confirmacionToken: token,
     confirmacionExpira: { $gt: Date.now() } // token aún válido
@@ -52,14 +51,13 @@ async function verifyUser(token) {
     throw new Error("Token inválido o expirado");
   }
 
-  // Actualizar estado de usuario
   user.confirmado = true;
   user.confirmacionToken = undefined;
   user.confirmacionExpira = undefined;
 
   await user.save();
 
-  return user;
+  return user; // solo retorna el usuario
 }
 
 module.exports = { registerUser,verifyUser};

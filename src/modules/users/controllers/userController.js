@@ -3,6 +3,8 @@ const { validateRegisterInput } = require("../validates/userValidate");
 const { registerUser, verifyUser } = require("../services/userService");
 const Usuario = require("../models/userModel")
 const bcrypt = require ("bcryptjs");
+const fs = require("fs");
+const path = require("path");
 
 async function register(req, res) {
   try {
@@ -54,20 +56,13 @@ async function verifyAccount(req, res) {
 
     const user = await verifyUser(token);
 
-    res.status(200).json({
-      success: true,
-      message: "Cuenta verificada correctamente",
-      user: {
-        _id: user._id,
-        nombres: user.nombres,
-        apellidos: user.apellidos,
-        apodo: user.apodo,
-        email: user.email,
-        confirmado: user.confirmado
-      }
-    });
+    const successPath = path.join(__dirname, "../../email/templates/verified.html");
+    return res.sendFile(successPath);
+
   } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
+    console.error("Error en verifyAccount:", error);
+    const errorPath = path.join(__dirname, "../../email/templates/verify-failed.html");
+    return res.sendFile(errorPath);
   }
 };
 
