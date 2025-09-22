@@ -1,18 +1,33 @@
 // src/modules/users/controllers/user.controller.js
 const { validateRegisterInput } = require("../validates/userValidate");
-const { registerUser } = require("../services/userService");
+const { registerUser, verifyUser } = require("../services/userService");
 const Usuario = require("../models/userModel")
+const bcrypt = require ("bcryptjs");
 
 async function register(req, res) {
   try {
-    const { nombres, apellidos, apodo, avatar, email, password, confirmPassword } = req.body;
+    const { nombres, apellidos, apodo, avatar, email, password, confirmPassword, acceptTerms } = req.body;
 
-    const errors = validateRegisterInput({ nombres, email, password, confirmPassword });
+    // Normalizar términos aceptados
+    const acceptTermsBool = acceptTerms === true || acceptTerms === "true" || acceptTerms === "on";
+
+    // Validaciones
+    const errors = validateRegisterInput({
+      nombres,
+      apellidos,
+      apodo,
+      email,
+      password,
+      confirmPassword,
+      acceptTerms: acceptTermsBool
+    });
+
     if (errors.length > 0) {
-      return res.status(400).json({ success: false, errors });
+      return res.status(400).json({ success: false, message: "Errores de validación", errors });
     }
 
-    const user = await registerUser({ nombres, apellidos, apodo, avatar, email, password });
+    // Llamar al servicio para crear usuario
+    const user = await registerUser({ nombres, apellidos, apodo, avatar, email, password, acceptTerms: acceptTermsBool });
 
     res.status(201).json({
       success: true,
@@ -25,6 +40,30 @@ async function register(req, res) {
         avatar: user.avatar,
         email: user.email,
         rol: user.rol
+      }
+    });
+  } catch (error) {
+    console.error("❌ Error en register:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+async function verifyAccount(req, res) {
+  try {
+    const { token } = req.params;
+
+    const user = await verifyUser(token);
+
+    res.status(200).json({
+      success: true,
+      message: "Cuenta verificada correctamente",
+      user: {
+        _id: user._id,
+        nombres: user.nombres,
+        apellidos: user.apellidos,
+        apodo: user.apodo,
+        email: user.email,
+        confirmado: user.confirmado
       }
     });
   } catch (error) {
@@ -132,4 +171,4 @@ async function actualizarPerfil (req, res) {
   }
 };
 
-module.exports = { register, getProfile, actualizarPerfil, login};
+module.exports = { register,verifyAccount, getProfile, actualizarPerfil, login};

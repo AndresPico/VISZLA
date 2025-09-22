@@ -1,0 +1,32 @@
+// src/modules/email/templates/confirmation.html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Confirma tu cuenta</title>
+  <style>
+    body { font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; }
+    .container { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 8px; padding: 20px; }
+    h2 { color: #2b2b2b; }
+    a.button {
+      display: inline-block;
+      margin-top: 15px;
+      padding: 12px 20px;
+      background-color: #0078D7;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 5px;
+      font-weight: bold;
+    }
+    p { color: #555; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>¡Bienvenido a The Nexus Battles!</h2>
+    <p>Gracias por registrarte. Para activar tu cuenta, haz clic en el botón:</p>
+    <a href="{{verificationLink}}" class="button">Confirmar mi cuenta</a>
+    <p>Este enlace expirará en 24 horas.</p>
+  </div>
+</body>
+</html>
