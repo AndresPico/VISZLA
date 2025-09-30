@@ -1,5 +1,4 @@
 const User = require("./userModel");
-const Audit = require("./auditModel"); // 👈 para registrar acciones
 
 exports.getUsers = async (req, res) => {
   try {

@@ -1,53 +1,21 @@
 const express = require("express");
 const Usuario = require("../models/userModel");
 const { verificarToken } = require("../../../middlewares/auth");
-const { register, verifyAccount } = require ("../controllers/userController.js");
+const { register, verifyAccount, login } = require ("../controllers/userController.js");
 
 const router = express.Router();
 
-// 📌 Registro de usuario
+// Registro de usuario 
 router.post("/register", register);
 
 //Verificar cuenta mediante correo
 router.get("/verify/:token", verifyAccount);
 
-router.post("/usuarios/login", async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    // Buscar usuario
-    const usuario = await Usuario.findOne({ email });
-    if (!usuario) {
-      return res.status(404).json({ message: "Usuario no encontrado" });
-    }
-
-    // Validar contraseña
-    const validaPassword = await bcrypt.compare(password, usuario.password);
-    if (!validaPassword) {
-      return res.status(400).json({ message: "Contraseña incorrecta" });
-    }
-
-    // Crear token JWT
-    const token = jwt.sign(
-      { id: usuario._id, email: usuario.email, rol: usuario.rol },
-      process.env.JWT_SECRET || "clave_temporal", // Fallback temporal
-      { expiresIn: "2h" }
-    );
-
-    res.status(200).json({
-      message: "Login exitoso",
-      token,
-      rol: usuario.rol,
-      nombres: usuario.nombres
-    });
-
-  } catch (error) {
-    res.status(500).json({ message: "Error en el servidor", error });
-  }
-});
+//Login con autenticacion en el Directorio Activo
+router.post("/login", login);
 
 // Obtener perfil del usuario autenticado
-router.get("/usuarios/profile", verificarToken, async (req, res) => {
+router.get("/profile", verificarToken, async (req, res) => {
   try {
     const usuario = await Usuario.findById(req.usuario.id).select("-password"); 
     if (!usuario) {

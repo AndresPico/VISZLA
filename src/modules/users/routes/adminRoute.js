@@ -52,7 +52,7 @@ router.delete("/users/:id", async (req, res) => {
 });
 
 //Creacion de usuarios que sean admin
-router.post("/users", async (req, res) => {
+router.post("/register", async (req, res) => {
   try {
     const nuevoUsuario = new Usuario({
       ...req.body,
