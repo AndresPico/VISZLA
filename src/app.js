@@ -10,6 +10,12 @@ connectDB();
 
 const app = express();
 
+// ✅ Configuración de CORS
+app.use(cors({
+  origin: "*", 
+  credentials: true
+}));
+
 // Middlewares básicos
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
