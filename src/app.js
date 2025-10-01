@@ -1,5 +1,6 @@
 const express = require("express");
 const path = require("path");
+const cors = require("cors");
 const usuariosRoutes = require("./modules/users/routes/userRoute");
 const adminRoutes = require("./modules/users/routes/adminRoute")
 const connectDB = require("../src/config/database");
