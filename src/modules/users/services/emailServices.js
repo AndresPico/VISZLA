@@ -1,8 +1,8 @@
 // src/modules/email/services/emailService.js
 const sgMail = require("@sendgrid/mail");
 require("dotenv").config();
-const fs = require("fs");
-const path = require("path");
+const fs = require("fs");  
+const path = require("path"); 
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
@@ -24,7 +24,7 @@ async function sendEmail(to, subject, templateName, replacements = {}) {
 
     const msg = {
       to,
-      from: process.env.FROM_EMAIL, // remitente verificado en SendGrid
+      from: process.env.FROM_EMAIL, 
       subject,
       html: htmlContent,
     };
@@ -46,4 +46,15 @@ async function sendVerificationEmail(to, token) {
   });
 }
 
-module.exports = { sendEmail, sendVerificationEmail };
+// 🔹 Correo de recuperación de contraseña
+async function sendPasswordResetEmail(to, token) {
+  const resetLink = `${process.env.FRONTEND_URL}/reset-password/${token}`;
+  return sendEmail(
+    to,
+    "Recupera tu contraseña - The Nexus Battles",
+    "password-reset.html",
+    { resetLink }
+  );
+}
+
+module.exports = { sendEmail, sendVerificationEmail, sendPasswordResetEmail };

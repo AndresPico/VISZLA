@@ -4,7 +4,6 @@ const cors = require("cors");
 const usuariosRoutes = require("./modules/users/routes/userRoute");
 const adminRoutes = require("./modules/users/routes/adminRoute")
 const connectDB = require("../src/config/database");
-const emailRoutes = require("../src/modules/email/routes/emailRoutes");
 
 // 🔗 Conectar a MongoDB
 connectDB();
@@ -27,8 +26,6 @@ app.use(express.static(path.join(__dirname, "public")));
 // Rutas API
 app.use("/api/usuarios", usuariosRoutes);
 app.use("/api/admin", adminRoutes);
-// app.use("/api/email", emailRoutes);
-
 
 // Ruta raíz -> muestra el formulario de registro
 app.get("/pages", (req, res) => {

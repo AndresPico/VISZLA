@@ -1,7 +1,6 @@
 // src/modules/users/services/userService.js
 const Usuario = require("../models/userModel");
-const emailService = require("../../email/services/emailServices");
-const { Change, Attribute } = require("ldapjs");
+const emailService = require("./emailServices");
 const path = require("path");
 const dotenv = require("dotenv");
 const { createLdapClient } = require("../../../config/ldap");
