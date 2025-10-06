@@ -13,5 +13,8 @@ RUN npm install --omit=dev
 # Copiar el resto del código
 COPY . .
 
+# Exponer el puerto esperado por Cloud Run
+EXPOSE 3000
+
 # Comando para correr la app
 CMD ["node", "src/server.js"]
