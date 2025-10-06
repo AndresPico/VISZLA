@@ -14,7 +14,7 @@ RUN npm install --omit=dev
 COPY . .
 
 # Exponer el puerto esperado por Cloud Run
-EXPOSE 3000
+EXPOSE 8080
 
 # Comando para correr la app
 CMD ["node", "src/server.js"]
