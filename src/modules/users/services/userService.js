@@ -1,7 +1,7 @@
 // src/modules/users/services/userService.js
 const Usuario = require("../models/userModel");
 const emailService = require("./emailServices");
-const { createUser, setPassword, enableUser } = require("./ADUserService");
+const { createUser, setPassword, enableUser } = require("./ADuserService");
 
 /**
  * Crea un usuario en Active Directory con contraseña
