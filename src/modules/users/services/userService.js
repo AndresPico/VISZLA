@@ -1,59 +1,26 @@
 // src/modules/users/services/userService.js
 const Usuario = require("../models/userModel");
 const emailService = require("./emailServices");
-const path = require("path");
-const dotenv = require("dotenv");
-const { createLdapClient } = require("../../../config/ldap");
-
-dotenv.config({ path: path.resolve(__dirname, "../../../../.env") });
+const { createUser, setPassword, enableUser } = require("./ADUserService");
 
 /**
  * Crea un usuario en Active Directory con contraseña
  */
 async function createADUser({ email, apodo, password, nombres, apellidos }) {
-  return new Promise((resolve, reject) => {
-    // ✅ Usar LDAPS (SSL) para operaciones de contraseña
-    const client = createLdapClient(true);
+  const dn = `CN=${apodo},CN=Users,DC=thenexusbattles,DC=local`;
 
-    // 🔑 Autenticar con administrador
-    client.bind(process.env.LDAP_ADMIN_DN, process.env.ADMIN_PASS, (err) => {
-      if (err) {
-        client.unbind();
-        return reject(new Error(`Error al autenticar con AD: ${err.message}`));
-      }
+  // 1️⃣ Crear usuario
+  await createUser({ dn, nombres, apellidos, apodo, email });
 
-      const dn = `CN=${apodo},CN=Users,DC=thenexusbattles,DC=local`;
+  // 2️⃣ Asignar contraseña
+  await setPassword(dn, password);
 
-      // Preparar la contraseña en formato UTF-16LE
-      const passwordBuffer = Buffer.from(`"${password}"`, "utf16le");
+  // 3️⃣ Habilitar cuenta
+  await enableUser(dn);
 
-      const entry = {
-        cn: apodo,
-        sn: apellidos,
-        givenName: nombres,
-        displayName: `${nombres} ${apellidos}`,
-        mail: email,
-        sAMAccountName: apodo,
-        userPrincipalName: `${apodo}@thenexusbattles.local`,
-        objectClass: ["top", "person", "organizationalPerson", "user"],
-        unicodePwd: passwordBuffer, // Establecer contraseña al crear
-        userAccountControl: "512", // Cuenta habilitada directamente
-      };
-
-      // Crear el usuario en AD con contraseña incluida
-      client.add(dn, entry, (err) => {
-        client.unbind();
-        
-        if (err) {
-          return reject(new Error(`Error creando usuario en AD: ${err.message}`));
-        }
-
-        console.log(`✅ Usuario ${apodo} creado en AD con contraseña`);
-        resolve(true);
-      });
-    });
-  });
+  console.log(`🎉 Usuario ${apodo} creado correctamente con contraseña y habilitado`);
 }
+
 
 /**
  * Registra un usuario completo (AD + MongoDB)

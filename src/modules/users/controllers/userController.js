@@ -107,14 +107,14 @@ async function verifyAccount(req, res) {
 
     const successPath = path.join(
       __dirname,
-      "../../email/templates/verified.html"
+      "../../users/templates/verified.html"
     );
     return res.sendFile(successPath);
   } catch (error) {
     console.error("❌ Error en verifyAccount:", error.message);
     const errorPath = path.join(
       __dirname,
-      "../../email/templates/verify-failed.html"
+      "../../users/templates/verify-failed.html"
     );
     return res.sendFile(errorPath);
   }

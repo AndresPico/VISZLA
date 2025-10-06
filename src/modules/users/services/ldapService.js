@@ -1,11 +1,16 @@
 // src/modules/users/services/ldapService.js
 const { createLdapClient } = require("../../../config/ldap");
 const Usuario = require("../models/userModel");
-const ldap = require("ldapjs");
+const path = require("path");
+const dotenv = require("dotenv");
+
+dotenv.config({ path: path.resolve(__dirname, "../../../../.env") });
+const util = require("util");
 
 /**
  * Autentica un usuario contra AD y devuelve sus datos combinados con MongoDB
  */
+
 async function getUserFromAD(email, password) {
   const client = createLdapClient(true);
 
@@ -13,73 +18,136 @@ async function getUserFromAD(email, password) {
     try {
       // 1️⃣ Buscar usuario en MongoDB
       const usuarioMongo = await Usuario.findOne({ email });
-      if (!usuarioMongo) return reject(new Error("Usuario no encontrado en la base de datos"));
-      if (!usuarioMongo.confirmado) return reject(new Error("Cuenta no verificada. Revisa tu correo electrónico."));
-      if (usuarioMongo.estado !== "activo") return reject(new Error(`Tu cuenta está ${usuarioMongo.estado}`));
+      console.debug("🔐 Intento de login:", email);
 
-      // 2️⃣ Buscar usuario en AD por apodo
+      if (!usuarioMongo)
+        return reject(new Error("Usuario no encontrado en la base de datos"));
+      if (!usuarioMongo.confirmado)
+        return reject(
+          new Error("Cuenta no verificada. Revisa tu correo electrónico.")
+        );
+      if (usuarioMongo.estado !== "activo")
+        return reject(new Error(`Tu cuenta está ${usuarioMongo.estado}`));
+
+      // 2️⃣ Buscar usuario en AD
       const searchOptions = {
         filter: `(sAMAccountName=${usuarioMongo.apodo})`,
         scope: "sub",
         attributes: ["dn", "cn", "mail", "displayName", "memberOf"],
       };
+      console.debug("🔍 Buscando en AD con filtro:", searchOptions.filter);
 
-      client.search("DC=thenexusbattles,DC=local", searchOptions, (err, res) => {
-        if (err) {
+      // 🔐 Bind con cuenta de servicio
+      client.bind(process.env.LDAP_ADMIN_DN, process.env.ADMIN_PASS, (bindErr) => {
+        if (bindErr) {
+          console.error("❌ Error bind admin AD:", bindErr);
           client.unbind();
-          return reject(new Error("Error buscando usuario en AD"));
+          return reject(new Error("Error al autenticar con AD para búsqueda"));
         }
 
-        let userAD = null;
-
-        res.on("searchEntry", (entry) => {
-          userAD = entry.object;
-        });
-
-        res.on("end", () => {
-          if (!userAD) {
+        client.search(process.env.LDAP_BASE_DN, searchOptions, (err, res) => {
+          if (err) {
+            console.error("❌ Error lanzando búsqueda en AD:", err);
             client.unbind();
-            return reject(new Error("Usuario no encontrado en AD"));
+            return reject(new Error("Error buscando usuario en AD"));
           }
 
-          // 3️⃣ Intentar autenticar con el DN real
-          const userDN = userAD.dn;
+          let userAD = null;
 
-          const authClient = createLdapClient(true);
-          authClient.bind(userDN, password, (err) => {
-            if (err) {
-              authClient.unbind();
-              return reject(new Error("Credenciales inválidas"));
+          res.on("searchEntry", (entry) => {
+            // Asegurar que el DN siempre sea string
+            const dnStr =
+              entry.dn?.toString?.() ||
+              entry.objectName?.toString?.() ||
+              entry.name?.toString?.() ||
+              null;
+
+            if (entry.object) {
+              userAD = { ...entry.object, dn: dnStr };
+            } else {
+              // fallback si no viene object
+              const parsed = {};
+              (entry.attributes || []).forEach((attr) => {
+                const key = attr.type || attr.name;
+                const vals = attr.values || attr.vals;
+                parsed[key] = Array.isArray(vals)
+                  ? vals.length === 1
+                    ? vals[0]
+                    : vals
+                  : vals;
+              });
+              parsed.dn = dnStr;
+              userAD = parsed;
             }
 
-            console.log(`✅ Usuario ${usuarioMongo.apodo} autenticado en AD`);
-            authClient.unbind();
+            console.debug(
+              "✅ Usuario encontrado en AD:",
+              util.inspect(userAD, { depth: 2 })
+            );
+          });
 
-            // 4️⃣ Combinar datos MongoDB + AD
-            resolve({
-              // Datos Mongo
-              _id: usuarioMongo._id,
-              nombres: usuarioMongo.nombres,
-              apellidos: usuarioMongo.apellidos,
-              apodo: usuarioMongo.apodo,
-              avatar: usuarioMongo.avatar,
-              email: usuarioMongo.email,
-              rol: usuarioMongo.rol,
-              estado: usuarioMongo.estado,
-              // Datos AD
-              displayName: userAD.displayName,
-              mail: userAD.mail,
-              groups: userAD.memberOf || [],
+          res.on("error", (err) => {
+            console.error("❌ Error en stream de búsqueda AD:", err);
+            client.unbind();
+            reject(new Error("Error en la búsqueda de AD: " + err.message));
+          });
+
+          res.on("end", () => {
+            if (!userAD || !userAD.dn) {
+              console.error("❌ No se pudo obtener un DN válido del AD");
+              client.unbind();
+              return reject(
+                new Error(
+                  "Usuario encontrado, pero sin DN válido en el Directorio Activo"
+                )
+              );
+            }
+
+            // 3️⃣ Autenticar con el DN real (convertido a string)
+            const userDN = userAD.dn.toString();
+            console.debug("👤 DN del usuario encontrado:", userDN);
+
+            const authClient = createLdapClient(true);
+            authClient.bind(userDN, password, (authErr) => {
+              if (authErr) {
+                console.error("❌ Error autenticando usuario en AD:", authErr);
+                authClient.unbind();
+                client.unbind();
+                return reject(new Error("Credenciales inválidas"));
+              }
+
+              console.log(`✅ Usuario ${usuarioMongo.apodo} autenticado en AD`);
+              authClient.unbind();
+              client.unbind();
+
+              // 4️⃣ Combinar datos MongoDB + AD
+              resolve({
+                _id: usuarioMongo._id,
+                nombres: usuarioMongo.nombres,
+                apellidos: usuarioMongo.apellidos,
+                apodo: usuarioMongo.apodo,
+                avatar: usuarioMongo.avatar,
+                email: usuarioMongo.email,
+                rol: usuarioMongo.rol,
+                estado: usuarioMongo.estado,
+                displayName: userAD.displayName || userAD.cn || null,
+                mail: userAD.mail || null,
+                groups: userAD.memberOf || [],
+              });
             });
           });
         });
       });
     } catch (error) {
-      client.unbind();
+      console.error("❌ Excepción en getUserFromAD:", error);
+      try {
+        client.unbind();
+      } catch (_) {}
       reject(error);
     }
   });
 }
+
 
 /**
  * Verifica si un usuario existe en Active Directory
@@ -91,6 +159,7 @@ async function userExistsInAD(apodo) {
     client.bind(process.env.LDAP_ADMIN_DN, process.env.ADMIN_PASS, (err) => {
       if (err) {
         client.unbind();
+        console.error("❌ Error autenticando administrador AD:", err);
         return reject(new Error("Error al autenticar con AD"));
       }
 
@@ -100,19 +169,27 @@ async function userExistsInAD(apodo) {
         attributes: ["dn"],
       };
 
+      console.debug("🔍 Verificando existencia en AD con filtro:", searchOptions);
+
       client.search(process.env.LDAP_BASE_DN, searchOptions, (err, res) => {
         if (err) {
           client.unbind();
+          console.error("❌ Error lanzando búsqueda AD:", err);
           return reject(err);
         }
 
         let found = false;
-        res.on("searchEntry", () => (found = true));
+        res.on("searchEntry", (entry) => {
+          console.debug("✅ Usuario encontrado en AD:", entry.object);
+          found = true;
+        });
         res.on("end", () => {
+          console.debug("🔚 Fin búsqueda AD. Encontrado:", found);
           client.unbind();
           resolve(found);
         });
         res.on("error", (err) => {
+          console.error("❌ Error en stream búsqueda AD:", err);
           client.unbind();
           reject(err);
         });
