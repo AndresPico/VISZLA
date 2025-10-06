@@ -125,19 +125,19 @@ async function verifyAccount(req, res) {
  */
 async function login(req, res) {
   try {
-    const { email, password } = req.body;
+    const { apodo, password } = req.body;
 
-    if (!email || !password) {
+    if (!apodo || !password) {
       return res.status(400).json({
         success: false,
         message: "Email y contraseña son requeridos",
       });
     }
 
-    console.log("🔐 Intento de login:", email);
+    console.log("🔐 Intento de login:", apodo);
 
     // 🔐 Autenticación en AD + datos de MongoDB
-    const user = await getUserFromAD(email, password);
+    const user = await getUserFromAD(apodo, password);
 
     console.log("✅ Login exitoso:", user.apodo);
 

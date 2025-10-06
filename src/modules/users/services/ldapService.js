@@ -11,14 +11,14 @@ const util = require("util");
  * Autentica un usuario contra AD y devuelve sus datos combinados con MongoDB
  */
 
-async function getUserFromAD(email, password) {
+async function getUserFromAD(apodo, password) {
   const client = createLdapClient(true);
 
   return new Promise(async (resolve, reject) => {
     try {
       // 1️⃣ Buscar usuario en MongoDB
-      const usuarioMongo = await Usuario.findOne({ email });
-      console.debug("🔐 Intento de login:", email);
+      const usuarioMongo = await Usuario.findOne({ apodo });
+      console.debug("🔐 Intento de login:", apodo);
 
       if (!usuarioMongo)
         return reject(new Error("Usuario no encontrado en la base de datos"));
