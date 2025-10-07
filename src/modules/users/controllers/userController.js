@@ -130,7 +130,7 @@ async function login(req, res) {
     if (!apodo || !password) {
       return res.status(400).json({
         success: false,
-        message: "Email y contraseña son requeridos",
+        message: "Apodo y contraseña son requeridos",
       });
     }
 
