@@ -28,7 +28,7 @@ async function sendVerificationEmail(to, token) {
 
 // 🔹 Correo de recuperación de contraseña
 async function sendPasswordResetEmail(to, token) {
-  const resetLink = `${process.env.FRONTEND_URL}/reset-password/${token}`;
+  const resetLink = `${process.env.FRONTEND_URL}/:${token}`;
 
   const templatePath = path.join(__dirname, "../templates/password-reset.html");
   let htmlTemplate = fs.readFileSync(templatePath, "utf8");
